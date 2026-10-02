@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04 # Используем старую ОС для совместимости со старым NDK
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout Code
@@ -15,22 +15,26 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '8' # Эмулятору нужна именно старая Java 8
+          java-version: '8'
 
-      - name: Setup Android NDK
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          ndk-version: '21.4.7075529' # Устанавливаем NDK для сборки C-кода эмулятора
+
+      - name: Install Android NDK r21e
+        run: |
+          # Устанавливаем нужную версию NDK напрямую через менеджер SDK
+          sdkmanager --install "ndk;21.4.7075529"
+          # Прописываем путь к NDK в настройки проекта, чтобы Gradle его увидел
+          echo "ndk.dir=$ANDROID_HOME/ndk/21.4.7075529" > local.properties
 
       - name: Force 64-bit ARM Architecture
         run: |
-          # Включаем компиляцию под 64-битные процессоры (arm64-v8a)
           if [ -f project.properties ]; then
             echo "ndk.abis := armeabi-v7a arm64-v8a" >> project.properties
           fi
           find . -name "Application.mk" | while read file; do
             echo "APP_ABI := armeabi-v7a arm64-v8a" > "$file"
-           Cav
+          done
 
       - name: Build with Gradle
         run: |
